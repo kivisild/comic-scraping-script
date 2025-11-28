@@ -18,13 +18,13 @@ async function main(URLInput = "https://www.monkeyuser.com/", maxPages = 29){
             visitedUrls.push(currentURL);
         
             scrapingData = await scrapePage(currentURL, visitedUrls, URLSToVisit);
-            images.push(scrapingData[0]);
+            images.push(...scrapingData[0]);
             URLSToVisit.push(scrapingData[1]);
         } 
     }
 
     console.log(`Images: ${images}, Length: ${images.length}`);
-    for (let i = 0; i < images.length - 1; i++){
+   while (images.length > 0 ){
             currentImage = images.pop() + '';
             if (currentImage != ''){
                 downloadImage(currentImage);
