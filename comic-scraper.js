@@ -65,7 +65,9 @@ async function scrapePage(url,visitedUrls, urlsToVisit, downloadPath = "comics")
             ImgURLOutput.push(imageURL.href)
             }       
         });
-    
+
+
+    await new Promise(r => setTimeout(r, Math.random() * 500));
     return [ImgURLOutput, NavURLOutput];
     
     }
@@ -76,6 +78,8 @@ function downloadImage(url, downloadPath = "comics"){
     const filename = url.split('/').pop();
     request(url).pipe(fs.createWriteStream(downloadPath + '/' + filename));
 }
+
+
 
 main().then(()=> {
     return 0;
