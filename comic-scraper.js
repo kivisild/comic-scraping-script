@@ -1,44 +1,80 @@
-const axios = require("axios");
+const Axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
 const request = require("request");
+const { setupCache } = require("axios-cache-interceptor");
 
 
 
-async function main(maxPages = 29, downloadPath = "comics"){
-    const urlsToVisit = ["https://www.monkeyuser.com"]
-    const visitedUrls = [];
+async function main(URLInput = "https://www.monkeyuser.com/", maxPages = 29){
+    const URLSToVisit = [URLInput];
 
-
-    while(visitedUrls.length <= maxPages){
-        const paginationURL = urlsToVisit.pop();
-        const baseURL = paginationURL;
-        const pageHTML = await axios.get(paginationURL);
-        visitedUrls.push(paginationURL);
-
-        const $ = cheerio.load(pageHTML.data);
-
-        $(".pagination a").each((index, element) => {
-            let paginationURL = new URL($(element).attr("href"), baseURL);
-
-            if(!visitedUrls.includes(paginationURL.href) && !urlsToVisit.includes(paginationURL.href)){
-                urlsToVisit.push(paginationURL.href);
-            }
-        });
-
-        if (!fs.existsSync(downloadPath)){
-            fs.mkdirSync(downloadPath);
-        }
-
-        $(".comic .content p img").each((index, image) => {
-            const imageURL = new URL($(image).attr("src"), paginationURL);
-            const filename = imageURL.pathname.split('/').pop();
-            request(imageURL.href).pipe(fs.createWriteStream(downloadPath + '/' + filename));
-        })
-
-
-
+    let visitedUrls = [];
+    let images = [];
+    
+    if (URLSToVisit != []){
+        while(visitedUrls.length < maxPages){
+            const currentURL = URLSToVisit.pop();
+            visitedUrls.push(currentURL);
+        
+            scrapingData = await scrapePage(currentURL, visitedUrls, URLSToVisit);
+            images.push(scrapingData[0]);
+            URLSToVisit.push(scrapingData[1]);
+        } 
     }
+
+    console.log(`Images: ${images}, Length: ${images.length}`);
+    for (let i = 0; i < images.length - 1; i++){
+            currentImage = images.pop() + '';
+            if (currentImage != ''){
+                downloadImage(currentImage);
+            }
+            
+        }
+    
+
+    
+}
+async function scrapePage(url,visitedUrls, urlsToVisit, downloadPath = "comics"){
+    
+    const instance = Axios.create();
+    const axios = setupCache(instance);
+    let ImgURLOutput = [];
+    let NavURLOutput = null;
+    const pageHTML = await axios.get(url);
+    const $ = cheerio.load(pageHTML.data);
+    const paginationURL = url;
+    
+    $(".pagination a").each((index, element) => {
+         url = new URL($(element).attr("href"), url);
+        if(!visitedUrls.includes(url.href) && 
+        !urlsToVisit.includes(url.href)){
+            NavURLOutput = (url.href);
+        }
+    });
+
+    if (!fs.existsSync(downloadPath)){
+        fs.mkdirSync(downloadPath);
+    }
+
+    $(".comic .content p img").each((index, image) => {
+        
+        const imageURL = new URL($(image).attr("src"), paginationURL);
+        const filename = imageURL.href.split('/').pop();
+        if (!fs.existsSync(`${downloadPath}/${filename}`)){
+            ImgURLOutput.push(imageURL.href)
+            }       
+        });
+    
+    return [ImgURLOutput, NavURLOutput];
+    
+    }
+
+
+function downloadImage(url, downloadPath = "comics"){
+    console.log(`Downloading image: ${url}`);
+    const filename = url.split('/').pop();
+    request(url).pipe(fs.createWriteStream(downloadPath + '/' + filename));
 }
 
 main().then(()=> {
