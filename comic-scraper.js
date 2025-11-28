@@ -6,7 +6,7 @@ const { setupCache } = require("axios-cache-interceptor");
 
 
 
-async function main(URLInput = "https://www.monkeyuser.com/", maxPages = 29){
+async function main(URLInput = "https://www.monkeyuser.com/", maxPages = 10){
     const URLSToVisit = [URLInput];
 
     let visitedUrls = [];
