@@ -12,7 +12,7 @@ async function main(URLInput = "https://www.monkeyuser.com/", maxPages = 29){
     let visitedUrls = [];
     let images = [];
     
-    if (URLSToVisit != []){
+    if (Array.isArray(URLSToVisit) && URLSToVisit.length){
         while(visitedUrls.length < maxPages){
             const currentURL = URLSToVisit.pop();
             visitedUrls.push(currentURL);
